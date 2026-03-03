@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>荳荳美語 - 教學排程與補課追蹤</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --bg-color: #f4f7f6;
+            --panel-bg: #ffffff;
+            --text-main: #333333;
+            --text-muted: #7f8c8d;
+            --border-color: #e0e6ed;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* 頂部導覽列 */
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        header h1 {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        /* 主要內容區 */
+        .main-container {
+            display: flex;
+            flex: 1;
+            padding: 15px;
+            gap: 15px;
+            height: calc(100vh - 55px);
+        }
+
+        /* 左側表單區 */
+        .form-panel {
+            background: var(--panel-bg);
+            width: 320px;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
+        }
+
+        .form-panel h2 {
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 5px;
+            display: inline-block;
+        }
+
+        .form-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 3px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--primary-color);
+        }
+
+        .form-group input, 
+        .form-group select, 
+        .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .form-group input:focus, 
+        .form-group select:focus, 
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+        }
+
+        .form-group textarea {
+            resize: none;
+            flex: 1;
+            min-height: 50px;
+        }
+
+        button.btn-submit {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        button.btn-submit:hover { background-color: #2980b9; }
+
+        /* 系統操作區 */
+        .system-actions {
+            margin-top: 15px;
+            padding-top: 12px;
+            border-top: 1px dashed var(--border-color);
+            display: flex;
+            gap: 10px;
+        }
+
+        .system-actions button {
+            flex: 1;
+            padding: 8px;
+            background-color: #95a5a6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .system-actions button:hover { background-color: #7f8c8d; }
+
+        /* 右側列表區 */
+        .list-panel {
+            background: var(--panel-bg);
+            flex: 1;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .list-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .list-header h2 { font-size: 1.1rem; color: var(--primary-color); }
+        .filter-group select { padding: 6px 10px; border-radius: 4px; border: 1px solid var(--border-color); }
+
+        .table-container {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+        
+        th {
+            position: sticky;
+            top: 0;
+            background-color: #f8fafc;
+            color: var(--text-muted);
+            text-align: left;
+            padding: 12px 15px;
+            font-size: 0.85rem;
+            border-bottom: 2px solid var(--border-color);
+            z-index: 1;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            vertical-align: middle;
+        }
+
+        tr:hover { background-color: #f8fafc; }
+
+        .badge { padding: 4px 8px; border-radius: 15px; font-size: 0.75rem; font-weight: 600; }
+        .badge.makeup { background-color: #e1f5fe; color: #0288d1; }
+        .badge.exam { background-color: #fce4ec; color: #c2185b; }
+        .badge.homework { background-color: #fff8e1; color: #f57f17; }
+        
+        .status-pending { color: var(--danger-color); font-weight: 600; }
+        .status-completed { color: var(--success-color); font-weight: 600; }
+
+        .action-btns button {
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-right: 4px;
+        }
+
+        .btn-complete { background-color: var(--success-color); color: white; }
+        .btn-delete { background-color: var(--danger-color); color: white; }
+
+        .completed-row { opacity: 0.6; text-decoration: line-through; text-decoration-color: var(--text-muted); }
+        .completed-row .badge, .completed-row td:last-child { text-decoration: none; }
+
+        /* 日期專屬樣式 */
+        .date-badge {
+            display: inline-block;
+            padding: 3px 6px;
+            border-radius: 4px;
+        }
+        .date-today {
+            background-color: #e3f2fd;
+            color: #1976d2;
+            font-weight: 700;
+            border: 1px solid #bbdefb;
+        }
+        .date-overdue {
+            background-color: #ffebee;
+            color: #d32f2f;
+            font-weight: 700;
+            border: 1px solid #ffcdd2;
+        }
+        .date-normal {
+            color: var(--text-main);
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🌟 荳荳美語 - 教學排程與補課追蹤系統</h1>
+        <div id="datetime" style="font-size: 0.9rem;"></div>
+    </header>
+
+    <div class="main-container">
+        <div class="form-panel">
+            <div>
+                <h2>新增待辦事項</h2>
+                <form id="recordForm" class="form-content">
+                    <div class="form-group">
+                        <label for="studentName">學生姓名</label>
+                        <input type="text" id="studentName" required autocomplete="off">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="className">班級名稱</label>
+                        <input type="text" id="className" required placeholder="例：J1A" autocomplete="off">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="leaveDate">請假/缺課日期 (可填多天)</label>
+                        <input type="text" id="leaveDate" required placeholder="例：3/2, 3/4~3/5" autocomplete="off">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="taskType">項目類型</label>
+                        <select id="taskType">
+                            <option value="makeup">補課 (Make-up)</option>
+                            <option value="exam">補考 (Exam)</option>
+                            <option value="homework">補交功課 (HW)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="display: flex; flex-direction: column; flex: 1;">
+                        <label for="notes">備註內容</label>
+                        <textarea id="notes" placeholder="進度、範圍等..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-submit">加入追蹤列表</button>
+                </form>
+            </div>
+
+            <div class="system-actions">
+                <button onclick="exportData()">💾 備份資料</button>
+                <button onclick="document.getElementById('importFile').click()">📂 還原資料</button>
+                <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+            </div>
+        </div>
+
+        <div class="list-panel">
+            <div class="list-header">
+                <h2>任務追蹤列表</h2>
+                <div class="filter-group">
+                    <select id="statusFilter">
+                        <option value="all">顯示全部</option>
+                        <option value="pending" selected>僅顯示「待處理」</option>
+                        <option value="completed">僅顯示「已完成」</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th width="15%">日期</th>
+                            <th width="12%">班級</th>
+                            <th width="12%">姓名</th>
+                            <th width="12%">項目</th>
+                            <th width="29%">備註</th>
+                            <th width="10%">狀態</th>
+                            <th width="10%">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 即時時間顯示
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('datetime').innerText = now.toLocaleDateString('zh-TW') + ' ' + now.toLocaleTimeString('zh-TW', {hour: '2-digit', minute:'2-digit'});
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // 狀態與資料管理
+        let records = JSON.parse(localStorage.getItem('teacherRecords_DouDou')) || [];
+
+        const form = document.getElementById('recordForm');
+        const tableBody = document.getElementById('tableBody');
+        const statusFilter = document.getElementById('statusFilter');
+
+        const typeConfig = {
+            'makeup': { text: '補課', class: 'makeup' },
+            'exam': { text: '補考', class: 'exam' },
+            'homework': { text: '補交功課', class: 'homework' }
+        };
+
+        function saveRecords() {
+            localStorage.setItem('teacherRecords_DouDou', JSON.stringify(records));
+            renderTable();
+        }
+
+        // 解析日期字串
+        function parseDateString(dateStr) {
+            const match = String(dateStr).match(/(?:(\d{4})[\/\-])?(\d{1,2})[\/\-](\d{1,2})/);
+            if (match) {
+                const y = match[1] ? parseInt(match[1], 10) : new Date().getFullYear();
+                const m = parseInt(match[2], 10);
+                const d = parseInt(match[3], 10);
+                return new Date(y, m - 1, d, 0, 0, 0, 0).getTime();
+            }
+            return 0; // 無法解析
+        }
+
+        function renderTable() {
+            tableBody.innerHTML = '';
+            const filterValue = statusFilter.value;
+
+            // 取得今日凌晨 00:00:00 的時間戳記
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const todayTime = today.getTime();
+
+            // 排序邏輯：
+            // 1. 將解析出來的日期做「升冪」排序（過去的在上面，未來的在下面）
+            // 2. 如果無法解析(0)，則給予極大值讓它排到最下面
+            const sortedRecords = [...records].sort((a, b) => {
+                let timeA = parseDateString(a.date);
+                let timeB = parseDateString(b.date);
+                
+                // 將無法辨識的日期放到最後面
+                if (timeA === 0) timeA = Infinity;
+                if (timeB === 0) timeB = Infinity;
+                
+                if (timeA !== timeB) {
+                    return timeA - timeB; // 升冪排序：越早的日期排越上面
+                }
+                
+                // 日期相同時，依照建立時間的反序排列（新建立的排在同日期的上方）
+                return parseInt(b.id) - parseInt(a.id);
+            });
+
+            sortedRecords.forEach(record => {
+                if (filterValue === 'pending' && record.completed) return;
+                if (filterValue === 'completed' && !record.completed) return;
+
+                const tr = document.createElement('tr');
+                if (record.completed) tr.className = 'completed-row';
+
+                // 判斷日期狀態
+                const recordTime = parseDateString(record.date);
+                let dateClass = "date-normal";
+                
+                if (recordTime > 0) {
+                    if (recordTime === todayTime) {
+                        dateClass = "date-today"; // 今天
+                    } else if (recordTime < todayTime) {
+                        dateClass = "date-overdue"; // 過期
+                    }
+                }
+
+                const typeInfo = typeConfig[record.type];
+                
+                tr.innerHTML = `
+                    <td><span class="date-badge ${dateClass}">${record.date}</span></td>
+                    <td><strong>${record.className}</strong></td>
+                    <td>${record.name}</td>
+                    <td><span class="badge ${typeInfo.class}">${typeInfo.text}</span></td>
+                    <td>${record.notes || '-'}</td>
+                    <td class="${record.completed ? 'status-completed' : 'status-pending'}">
+                        ${record.completed ? '已完成' : '待處理'}
+                    </td>
+                    <td class="action-btns">
+                        ${!record.completed ? `<button class="btn-complete" onclick="toggleStatus('${record.id}')">完成</button>` : `<button class="btn-complete" style="background:#7f8c8d;" onclick="toggleStatus('${record.id}')">復原</button>`}
+                        <button class="btn-delete" onclick="deleteRecord('${record.id}')">刪除</button>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        // 新增紀錄
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const newRecord = {
+                id: Date.now().toString(),
+                name: document.getElementById('studentName').value,
+                className: document.getElementById('className').value,
+                date: document.getElementById('leaveDate').value,
+                type: document.getElementById('taskType').value,
+                notes: document.getElementById('notes').value,
+                completed: false
+            };
+            records.push(newRecord);
+            saveRecords();
+            
+            // 每次輸入完新的一筆資料時，確保左側的所有內容都清空
+            form.reset();
+            // 自動將游標對焦回「學生姓名」，方便快速輸入下一筆
+            document.getElementById('studentName').focus();
+        });
+
+        // 切換完成狀態
+        window.toggleStatus = function(id) {
+            const record = records.find(r => r.id === id);
+            if (record) {
+                record.completed = !record.completed;
+                saveRecords();
+            }
+        }
+
+        // 刪除紀錄
+        window.deleteRecord = function(id) {
+            if(confirm('確定要刪除這筆紀錄嗎？')) {
+                records = records.filter(r => r.id !== id);
+                saveRecords();
+            }
+        }
+
+        // 備份資料匯出
+        window.exportData = function() {
+            if(records.length === 0) {
+                alert('目前沒有資料可以備份喔！');
+                return;
+            }
+            const dataStr = JSON.stringify(records, null, 2);
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const today = new Date().toISOString().slice(0, 10);
+            a.download = `荳荳美語_補課紀錄備份_${today}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // 讀取還原資料
+        window.importData = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (Array.isArray(importedData)) {
+                        if(confirm('還原資料會覆蓋掉目前的紀錄，確定要還原嗎？')) {
+                            records = importedData;
+                            saveRecords();
+                            alert('資料還原成功！');
+                        }
+                    } else {
+                        alert('檔案格式不正確，請選擇正確的備份檔。');
+                    }
+                } catch (err) {
+                    alert('讀取檔案失敗，請確認是否為系統產生的備份檔。');
+                }
+                event.target.value = ''; // 清空 file input 讓同檔名可以重複選取
+            };
+            reader.readAsText(file);
+        }
+
+        statusFilter.addEventListener('change', renderTable);
+        renderTable();
+    </script>
+</body>
+</html>
